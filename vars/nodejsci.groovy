@@ -11,7 +11,7 @@ def call (Map configMap){
         //  }
         environment{
             ACC_ID = "654654431182"
-            GITHUB_REPO = "configMap.get("GITHUB_REPO")"
+            GITHUB_REPO = configMap.get("GITHUB_REPO")
             GITHUB_PROJECT = "roboshop"
         }
         stages {
