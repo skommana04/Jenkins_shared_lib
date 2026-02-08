@@ -1,0 +1,48 @@
+def call (Map configMap){
+    pipeline {
+        agent{
+            node 'slave1'
+        }
+        environment{
+            REGION='us-east-1'
+            PROJECT='roboshop'
+            image_tag=configMap.get("image_tag")
+            GITHUB_REPO=configMap.get("GITHUB_REPO")
+            deploy_to=configMap.get("deploy_to")
+        }
+        // parameters{
+        //     string(name: 'image_tag')
+        //     choice(name: 'deploy_to', choices: ['dev', 'test', 'prod'], description: 'Environment')
+        // }
+        stages{
+            stage('Print Parmateres'){
+                steps{
+                    script{
+                        sh """
+                            echo "Deploying version: ${params.image_tag}"
+                            echo "Target environment: ${params.deploy_to}"
+                        """
+                    }
+                }
+            }
+            stage('Deploy'){
+                steps{
+                    script{
+                        withAWS(credentials: 'aws-creds', region: 'us-east-1') {
+                            sh """
+                                aws eks update-kubeconfig --name ${PROJECT} --region ${REGION}       
+                                echo "Deploy"
+                                kubectl get nodes
+                                
+                                helm upgrade --install ${GITHUB_REPO} . -f values.yaml --set imageVersion=${image_tag}
+                            """
+                            //sed -i "s/imageVersion: */imageVersion: ${params.image_tag}/g" values.yaml
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+}                  
+
